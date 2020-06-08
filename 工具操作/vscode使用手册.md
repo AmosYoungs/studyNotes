@@ -12,4 +12,6 @@
 
 在桌面的vscode启动快捷方式右键打开属性，做如下配置：在启动命令后面添加  `--disable-gpu`  禁用gpu加速，重启vscode。
 
-<img src="../assets/img/20200609004650.png" style="zoom: 67%;" />
+<img src="https://github.com/Youngygl/studyNotes/blob/master/assets/img/20200609004650.png" style="zoom: 67%;" />
+
+![图片展示失败](https://github.com/Youngygl/studyNotes/raw/master/assets/img/20200609004650.png)
