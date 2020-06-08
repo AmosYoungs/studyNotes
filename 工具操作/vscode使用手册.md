@@ -14,4 +14,3 @@
 
 <img src="https://github.com/Youngygl/studyNotes/blob/master/assets/img/20200609004650.png" style="zoom: 67%;" />
 
-![图片展示失败](https://github.com/Youngygl/studyNotes/raw/master/assets/img/20200609004650.png)
