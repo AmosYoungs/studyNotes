@@ -14,3 +14,4 @@
 
 <img src="https://github.com/Youngygl/studyNotes/blob/master/%E5%B7%A5%E5%85%B7%E6%93%8D%E4%BD%9C/resources/img/200608001.png" style="zoom: 67%;" />
 
+![](https://github.com/Youngygl/studyNotes/raw/master/%E5%B7%A5%E5%85%B7%E6%93%8D%E4%BD%9C/resources/img/200608001.png)
