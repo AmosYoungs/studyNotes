@@ -13,3 +13,26 @@
 ## 函数组件
 
 如果一个组件只包含一个render方法，不包含state。那么就可以不用定义继承于React.Component的类，可以定义一个函数，这个函数接收props作为参数，然后返回需要渲染的元素。
+
+## 数据提升
+
+1.父组件向子组件通过props传递数据，如果一个数据在多个兄弟组件中使用，则这个数据要提升到最近的父级组件
+
+## 子组件触发父组件事件
+
+```
+function Children(props){
+	return (
+		<div onClick = {props.onClick}></div>
+	)
+}
+class Father extends React.Component{
+	function handClick(){
+		//触发父组件方法
+	}
+	return (
+	 <Children onClick = {()=>{this.handClick}}></Children>
+	)
+}
+```
+
