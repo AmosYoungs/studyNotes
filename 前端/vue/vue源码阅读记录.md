@@ -136,4 +136,109 @@ function defineReactive(obj,key,val){
 **3.3 把依赖收集到哪里？**
 3.1小节中提到可以给每个数据都建立一个依赖数组，谁依赖了这个数据就把谁放入这个数组中，但是这样代码有点欠缺且耦合度过高。可以将这个依赖收集功能扩展一下，为每一个数据都建立一个依赖管理器，把每个数据的所有依赖都管理起来，创建一个`Dep`类应运而生。
 
+```
+export default class Dep{
+    constructor(){
+        this.subs = []
+    }
+    addSub(sub){
+        this.subs.push(sub)
+    }
+    // 删除一个依赖
+    removeSub(sub){
+        remove(this.subs,sub)
+    }
+    // 添加一个依赖
+    depend(){
+        if(window.target){
+            this.addSub(window.target)
+        }
+    }
+    notify(){
+        const subs = this.subs.slice()
+        for(let i = 0;i<subs.length;i++){
+            subs[i].update();
 
+        }
+    }
+
+}
+/**
+ * Remove an item from an array
+ */
+export function remove (arr, item) {
+    if (arr.length) {
+      const index = arr.indexOf(item)
+      if (index > -1) {
+        return arr.splice(index, 1)
+      }
+    }
+  }
+
+```
+
+**3.4 依赖到底是谁**
+虽然我们一直在说”谁用到了这个数据谁就是依赖“，但是这仅仅是在口语层面上，那么反应在代码上该如何来描述这个”谁“呢？
+
+其实在Vue中还实现了一个叫做`Watcher`的类，而`Watcher`类的实例就是我们上面所说的那个"谁"。换句话说就是：谁用到了数据，谁就是依赖，我们就为谁创建一个`Watcher`实例。在之后数据变化时，我们不直接去通知依赖更新，而是通知依赖对应的`Watch`实例，由`Watcher`实例去通知真正的视图。
+
+`Watcher`类的具体实现如下：
+```
+
+export default class Watcher{
+    constructor(vm,expOrFn,cb){
+        this.vm = vm;
+        this.cb = cb;
+        this.getter = parsePath(expOrFn)
+        this.value = this.get()
+    }
+    get(){
+        window.target = this;
+        const vm = this.vm;
+        let value = this.getter.call(vm,vm);
+        window.target = undefined;
+        return value
+    }
+    update(){
+        const oldVal = this.value
+        this.value = this.get()
+        this.cb.call(this.vm, this.value, oldValue)
+    }
+}
+/**
+ * Parse simple path.
+ * 把一个形如'data.a.b.c'的字符串路径所表示的值，从真实的data对象中取出来
+ * 例如：
+ * data = {a:{b:{c:2}}}
+ * parsePath('a.b.c')(data)  // 2
+ */
+const bailRE = /[^\w.$]/
+export function parsePath (path) {
+  if (bailRE.test(path)) {
+    return
+  }
+  const segments = path.split('.')
+  return function (obj) {
+    for (let i = 0; i < segments.length; i++) {
+      if (!obj) return
+      obj = obj[segments[i]]
+    }
+    return obj
+  }
+}
+```
+
+分析以上代码逻辑：
+1.当实例化`Watcher`类时，会先执行其构造函数；
+2.在构造函数中调用了`this.get()`实例方法；
+3.在`get()`方法中，首先通过`window.target = this`把实例自身赋给了全局的一个唯一对象`window.target`上，然后通过`let value = this.getter.call(vm, vm)`获取一下被依赖的数据，获取被依赖数据的目的是触发该数据上面的`getter`，上文我们说过，在`getter`里会调用`dep.depend()`收集依赖，而在`dep.depend()`中取到挂载`window.target`上的值并将其存入依赖数组中，在`get()`方法最后将`window.target`释放掉。
+4.而当数据变化时，会触发数据的`setter`，在`setter`中调用了`dep.notify()`方法，在`dep.notify()`方法中，遍历所有依赖(即watcher实例)，执行依赖的`update()`方法，也就是`Watcher`类中的`update()`实例方法，在`update()`方法中调用数据变化的更新回调函数，从而更新视图。
+
+简单总结一下就是：`Watcher`先把自己设置到全局唯一的指定位置（window.target），然后读取数据。因为读取了数据，所以会触发这个数据的`getter`。接着，在`getter`中就会从全局唯一的那个位置读取当前正在读取数据的`Watcher`，并把这个`watcher`收集到`Dep`中去。收集好之后，当数据发生变化时，会向`Dep`中的每个`Watcher`发送通知。通过这样的方式，`Watcher`可以主动去订阅任意一个数据的变化。为了便于理解，我们画出了其关系流程图，如下图：
+
+![](../../assets/img/vue/20200810.png)
+
+**3.5 不足之处**
+虽然我们通过`Object.defineProperty`方法实现了对`object`数据的可观测，但是这个方法仅仅只能观测到object数据的取值及设置值，当我们向`object`数据里添加一对新的key/value或删除一对已有的key/value时，它是无法观测到的，导致当我们对`object`数据添加或删除值时，无法通知依赖，无法驱动视图进行响应式更新。
+
+当然，Vue也注意到了这一点，为了解决这一问题，Vue增加了两个全局API:`Vue.set`和`Vue.delete`，这两个API的实现原理将会在后面学习全局API的时候说到。
