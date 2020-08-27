@@ -241,4 +241,164 @@ export function parsePath (path) {
 **2.5不足之处**
 虽然我们通过`Object.defineProperty`方法实现了对`object`数据的可观测，但是这个方法仅仅只能观测到object数据的取值及设置值，当我们向`object`数据里添加一对新的key/value或删除一对已有的key/value时，它是无法观测到的，导致当我们对`object`数据添加或删除值时，无法通知依赖，无法驱动视图进行响应式更新。
 
-当然，Vue也注意到了这一点，为了解决这一问题，Vue增加了两个全局API:`Vue.set`和`Vue.delete`，这两个API的实现原理将会在后面学习全局API的时候说到。
+当然，Vue也注意到了这一点，为了解决这一问题，Vue增加了两个全局API:`Vue.set`和`Vue.delete`，这两个API的实现原理将会在后面学习全局API的时候说到。\
+
+## 3.Array的变化侦测
+
+**3.1前言**
+对于`Object`数据可以使用js提供的原型上的方法`Object.defineProperty`,这个方法是对象原型上的,`Array`无法使用这个方法,因而对于`Array`需要设计另一套变化侦测机制。
+**3.2在哪里收集依赖**
+`Array`型数据收集依赖的方式与`Object`数据收集依赖的方式相同，都是在`getter`中收集。那么问题来了,既然Array无法使用`Object.defineProperty`方法，怎么还在`getter`中收集依赖呢？
+在vue中我们通常这样在组件中这样写`data`
+```
+data(){
+    return {
+        arr:[]
+    }
+}
+```
+数组arr始终存在于一个对象data中，谁要使用arr就要从这个data中取，而从data中取arr就会触发arr的getter，那么就可以在getter中收集依赖。
+**3.3使Array型数据可观测**
+以上我们知道了如何收集Array的依赖，即我们知道了Array何时被读取了,但是我们还要知道Array什么时候发生了变化，对它进行变化侦测。
+**_1）思路分析_**
+Object变化是通过setter来跟踪，但是Array型数据没有setter，那么我们只能从可以修改Array的几种方法下手。那么我们就要想办法拦截修改数组的几种原生方法，通过拦截器重写Array.prototype原生方法，实现其原有功能，同时做一些我们的事情比如发送变化通知。
+**_2)数组方法拦截器_**
+```
+const arrayProto = Array.prototype
+// 用Array的原型创建一个新对象作为拦截器
+export const arrayMethods = Object.create(arrayProto)
+const methodsToPatch = [
+    'push',
+    'pop',
+    'shift',
+    'unshift',
+    'splice',
+    'sort',
+    'reverse'
+]
+methodsToPatch.forEach(function(method){
+    const original = arrayProto[method] //缓存原生方法
+    Object.defineProperty(arrayMethods,method,{
+        enumerable: false,
+        configurable: true,
+        writable: true,
+        value:function mutator(...args){
+            const result = original.apply(this,args)
+            return result
+        }
+    })
+})
+```
+在上面的代码中，首先创建了继承自Array原型的空对象`arrayMethods`，接着在`arrayMethods`上使用`object.defineProperty`方法将那些可以改变数组自身的7个方法遍历逐个进行封装。最后，当我们使用push方法的时候，其实用的是`arrayMethods.push`，而`arrayMethods.push`就是封装的新函数`mutator`，也就后说，实标上执行的是函数`mutator`，而`mutator`函数内部执行了`original`函数，这个`original`函数就是`Array.prototype`上对应的原生方法。 那么，接下来我们就可以在`mutator`函数中做一些其他的事，比如说发送变化通知
+**_3）使用拦截器_**
+在上一小节的图中，我们把拦截器做好还不够，还要把它挂载到数组实例与Array.prototype之间，这样拦截器才能够生效。
+
+其实挂载不难，我们只需把数据的__proto__属性设置为拦截器arrayMethods即可，源码实现如下：
+```
+export class Observer {
+  constructor (value) {
+    this.value = value
+    if (Array.isArray(value)) {
+      const augment = hasProto
+        ? protoAugment
+        : copyAugment
+      augment(value, arrayMethods, arrayKeys)
+    } else {
+      this.walk(value)
+    }
+  }
+}
+// 能力检测：判断__proto__是否可用，因为有的浏览器不支持该属性
+export const hasProto = '__proto__' in {}
+
+const arrayKeys = Object.getOwnPropertyNames(arrayMethods)
+
+/**
+ * Augment an target Object or Array by intercepting
+ * the prototype chain using __proto__
+ */
+function protoAugment (target, src: Object, keys: any) {
+  target.__proto__ = src
+}
+
+/**
+ * Augment an target Object or Array by defining
+ * hidden properties.
+ */
+/* istanbul ignore next */
+function copyAugment (target: Object, src: Object, keys: Array<string>) {
+  for (let i = 0, l = keys.length; i < l; i++) {
+    const key = keys[i]
+    def(target, key, src[key])
+  }
+}
+```
+上面代码中首先判断了浏览器是否支持`__proto__`，如果支持，则调用`protoAugment`函数把`value.__proto__ = arrayMethods`；如果不支持，则调用`copyAugment`函数把拦截器中重写的7个方法循环加入到`value`上。
+
+拦截器生效以后，当数组数据再发生变化时，我们就可以在拦截器中通知变化了，也就是说现在我们就可以知道数组数据何时发生变化了，OK，以上我们就完成了对Array型数据的可观测。
+**3.4再谈依赖收集**
+在第二章中我们说了，数组数据的依赖也在getter中收集，而给数组数据添加getter/setter都是在Observer类中完成的，所以我们也应该在Observer类中收集依赖
+```
+export class Observer {
+  constructor (value) {
+    this.value = value
+    this.dep = new Dep()    // 实例化一个依赖管理器，用来收集数组依赖
+    if (Array.isArray(value)) {
+      const augment = hasProto
+        ? protoAugment
+        : copyAugment
+      augment(value, arrayMethods, arrayKeys)
+    } else {
+      this.walk(value)
+    }
+  }
+}
+```
+在第二章中我们说了，数组的依赖也在getter中收集，那么在getter中到底该如何收集呢？这里有一个需要注意的点，那就是依赖管理器定义在Observer类中，而我们需要在getter中收集依赖，也就是说我们必须在getter中能够访问到Observer类中的依赖管理器，才能把依赖存进去。源码是这么做的：
+```
+function defineReactive (obj,key,val) {
+  let childOb = observe(val)
+  Object.defineProperty(obj, key, {
+    enumerable: true,
+    configurable: true,
+    get(){
+      if (childOb) {
+        childOb.dep.depend()
+      }
+      return val;
+    },
+    set(newVal){
+      if(val === newVal){
+        return
+      }
+      val = newVal;
+      dep.notify()   // 在setter中通知依赖更新
+    }
+  })
+}
+
+/**
+ * Attempt to create an observer instance for a value,
+ * returns the new observer if successfully observed,
+ * or the existing observer if the value already has one.
+ * 尝试为value创建一个0bserver实例，如果创建成功，直接返回新创建的Observer实例。
+ * 如果 Value 已经存在一个Observer实例，则直接返回它
+ */
+export function observe (value, asRootData){
+  if (!isObject(value) || value instanceof VNode) {
+    return
+  }
+  let ob
+  if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
+    ob = value.__ob__
+  } else {
+    ob = new Observer(value)
+  }
+  return ob
+}
+在上面代码中，我们首先通过observe函数为被获取的数据arr尝试创建一个Observer实例，在observe函数内部，先判断当前传入的数据上是否有__ob__属性，因为在上篇文章中说了，如果数据有__ob__属性，表示它已经被转化成响应式的了，如果没有则表示该数据还不是响应式的，那么就调用new Observer(value)将其转化成响应式的，并把数据对应的Observer实例返回。
+
+而在defineReactive函数中，首先获取数据对应的Observer实例childOb，然后在getter中调用Observer实例上依赖管理器，从而将依赖收集起来。
+```
+**3.5深度侦测**
+**3.6数组新增元素的侦测**
