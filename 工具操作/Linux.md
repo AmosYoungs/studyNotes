@@ -67,3 +67,64 @@ port=27015
 再次启动mongodb mongod -f /etc/mongodb.conf
 ```
 
+下载安装mysql
+
+cd /usr/local/download
+
+wget https://cdn.mysql.com/archives/mysql-5.7/mysql-5.7.30-linux-glibc2.12-x86_64.tar.gz
+
+tar -zxvf mysql-5.7.30-linux-glibc2.12-x86_64.tar.gz
+
+复制移动重命名  cp -r  mysql-5.7.30-linux-glibc2.12-x86_64  /usr/local/mysql
+
+```
+创建mysql用户组和mysql用户
+groupadd mysql
+useradd -r -g mysql mysql
+groups mysql
+修改mysql目录拥有者为刚建立的mysql用户
+cd mysql/
+chown -R mysql:mysql ./
+```
+
+```
+初始化配置：
+bin/mysqld --initialize --user=mysql --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data
+```
+
+上面命令执行报错：安装以下文件
+
+```csharp
+yum install  libaio-devel.x86_64
+```
+
+重复初始化配置：若还报错安装执行以下命令
+
+```csharp
+yum -y install numactl
+```
+
+```
+ 修改mysql目录拥有者为root用户，修改data目录拥有者为mysql
+ chown -R root:root ./ && chown -R mysql:mysql data
+```
+
+设置SSL安全连接mysql（RSA加密），指定mysql目录和data目录
+
+ bin/mysql_ssl_rsa_setup --basedir=/usr/local/mysql --datadir=/usr/local/mysql/data
+
+ bin/mysqld_safe --user=mysql --basedir=/usr/local/mysql/ --datadir=/usr/local/mysql/data &
+
+```
+将mysql加入/etc/init.d启动引导：
+cp support-files/mysql.server /etc/init.d/mysql
+```
+
+qDe6wqtGvs#y
+
+**Linux 添加环境变量**
+
+- vim ~/.bashrc   //进入环境变量配置文件
+- 加入要写的配置
+
+- source ~/.bashrc   //配置永久生效
