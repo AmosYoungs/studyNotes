@@ -25,3 +25,13 @@ let u: undefined = undefined;
 let n: null = null;
 ```
 
+## 二、常见问题
+
+### 2.1 给window对象添加属性提示语法错误
+
+动态声明:
+
+```
+(<any>window)['il8n'] = il8n;
+```
+

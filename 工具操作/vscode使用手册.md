@@ -6,6 +6,27 @@
 
 ## 1.插件的使用
 
+### 1.1koroFileHeader(注释模板)插件
+
+```
+    //settings.json
+    
+    "fileheader.customMade": { //文件头部注释 ctrl+alt+i
+        "Author":"yanggl",
+        "Date":"Do not edit",
+        "LastEditTime":"Do not Edit",
+        "Descripttion":"",
+        "autoAdd":false //是否自动添加注释
+    },
+    "fileheader.cursorMode": { //函数注释 ctrl+alt+t
+        "Descripttion":"",
+        "params":"",
+        "return":"",  
+    },
+```
+
+
+
 ## 2.常见问题
 
 ### 2.1新版vscode启动一段时间后界面显示模糊
