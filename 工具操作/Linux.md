@@ -67,7 +67,7 @@ port=27015
 再次启动mongodb mongod -f /etc/mongodb.conf
 ```
 
-下载安装mysql
+# 下载安装mysql
 
 cd /usr/local/download
 

@@ -35,3 +35,11 @@
 
 <img src="https://github.com/Youngygl/studyNotes/blob/master/assets/img/20200609004650.png" style="zoom: 67%;" />
 
+### 2.2 vscode每次只能打开一个文件不会新增tab页
+
+在settings.json添加如下设置：
+
+```
+"workbench.editor.enablePreview": false
+```
+
