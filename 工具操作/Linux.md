@@ -8,7 +8,9 @@
 | 解压文件             | tar -zxvf  [path：文件路径]       |
 | 复制文件             | mv [当前目录文件]  [目标文件路径] |
 | 查找文件             | find / -name [文件名称]           |
-|                      |                                   |
+| 解压zip文件          | unzip xxx                         |
+| 创建文件夹           | mkdir xxx                         |
+| 删除文件             | rm -rf  目录名字                  |
 
 
 
