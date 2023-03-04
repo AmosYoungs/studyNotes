@@ -7,7 +7,7 @@
 - 配置本地仓库
 
 ```
-<localRepository>F:\Develop\apache-maven-3.6.1/repository</localRepository>
+<localRepository>F:/Develop/apache-maven-3.6.1/repository</localRepository>
 ```
 
 - 配置远程仓库代理
@@ -37,4 +37,4 @@
 
 五、在idea的settings中搜索maven配置，修改相关配置
 
-<img src="F:\GithubCode\studyNotes\assets\img\后端\JAVA\20220416181501.png" style="zoom:50%;" />
+<img src="../../assets/img/后端/JAVA/20220416181501.png" style="zoom:50%;" />
