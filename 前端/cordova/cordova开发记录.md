@@ -24,6 +24,8 @@ cordova plugin rm jpush-phonegap-plugin --variable APP_KEY=0274dcdd22bff34aa6768
 
 cordova plugin add jpush-phonegap-plugin --variable APP_KEY=0274dcdd22bff34aa67688af
 
+cordova plugin add jpush-phonegap-plugin@4.8.6 --variable APP_KEY=0274dcdd22bff34aa67688af
+
 本地极光推送集成google版
 
 cordova plugin add local-plugin/cordova-plugin-jcore
