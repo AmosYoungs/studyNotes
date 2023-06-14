@@ -68,3 +68,18 @@ burp安装
 
 https://blog.csdn.net/qq_40810532/article/details/123692311
 
+
+
+nvm 
+
+设置默认node版本
+
+nvm alias default v16.14.0
+
+
+
+Sdkman 管理jdk grade
+
+```
+sdk install gradle 5.6.4
+```
