@@ -73,3 +73,26 @@ cordova plugin rm cordova-plugin-splashscreen 这个插件也不支持了，内�
 config.xml的变更记录
 
  <preference name="StatusBarStyle" value="default" />
+
+
+
+
+
+iOS webView渲染引擎替换原先默认使用的是UIWebViewEngine在新的iOS系统版本中对position：fixed元素支持有问题，更新为使用WKWebViewEngine修复问题
+
+添加插件支持
+
+cordova plugin add cordova-plugin-wkwebview-engine
+
+展业通 ID：com.taipinghk.ezt
+
+
+
+
+
+cordova plugin rm jpush-phonegap-plugin --variable APP_KEY=c1d670a62597b1b26ca955a5
+
+```
+cordova plugin add jpush-phonegap-plugin@3.8.6 --variable APP_KEY=c1d670a62597b1b26ca955a5
+
+```
