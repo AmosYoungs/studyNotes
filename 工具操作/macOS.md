@@ -82,4 +82,11 @@ Sdkman 管理jdk grade
 
 ```
 sdk install gradle 5.6.4
+
+sdk install java 22.0.2-oracle
+sdk default java 17.0.5-zulu
+sdk default java 22.0.2-oracle
+
+sdk list gradle
+sdk default gradle 7.4.2
 ```
